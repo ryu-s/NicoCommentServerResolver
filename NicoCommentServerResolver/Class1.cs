@@ -239,19 +239,10 @@ namespace ryu_s
                                 }
                                 return new CircleAndNotResolved<IEnumerable<AddrPort>>(circle, new List<AddrPort>());
                             }
-                            Replace(current, matchElem.After, part.GetRange(i + 1, part.Count - (i + j)));
-                            //var newElemList = new List<Elem<AddrPort>>();
-                            //for (int k = 1; k <= j; k++)
-                            //{
-                            //    newElemList.Add(new Elem<AddrPort>(part[k]));
-                            //}
-                            //var tmp = current;
-                            //foreach(var newElem in newElemList)
-                            //{
-                            //    tmp = InsertNext(tmp, part.GetRange(1, part.Count - (i + j)));
-                            //}
+                            Replace(current, matchElem.After, part.GetRange(i + 1, part.Count - (i + j)));                            
                             if (j + 1 < part.Count)
                             {
+                                //一致した以降にまだ要素があったら、一致した要素以降をもう一回最初から
                                 part.RemoveRange(0, j - 1);
                                 return Concat(circle, part);
                             }
