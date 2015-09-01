@@ -262,6 +262,44 @@ namespace ryu_s
             //一切一致しなかった。
             return new CircleAndNotResolved<IEnumerable<AddrPort>>(circle, part2);
         }
+        /// <summary>
+        /// リストどうしを外部結合する
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns>結合して出来たリスト、結合できなかった場合は空リスト</returns>
+        public static IEnumerable<AddrPort> OuterJoin(List<AddrPort> left, List<AddrPort> right)
+        {            
+            for(int i = 0;i< left.Count; i++)
+            {
+                for(int j = 0;j< right.Count; j++)
+                {
+                    if (left[i] != null && left[i].Equals(right[j]))
+                    {
+                        //i, jはそれぞれleft, righの合致した位置
+                        //統合後の要素数
+                        var count = ((i >= j) ? i : j) + (i >= j ? (right.Count - j) : (left.Count - i));
+                        
+                        var list1 = Enumerable.Repeat<AddrPort>(null, count).ToList();
+                        var large = (i >= j) ? left : right;
+                        var small = (i >= j) ? right : left;
+                        //合致したところのインデックスが大きい方の要素は前から、小さい方は合致した位置から要素を挿入する。
+                        for (int k = 0; k < large.Count ; k++)
+                        {
+                            list1[k] = large[k];
+                        }
+                        //kはsmallのインデックス、mは結合結果のリストにおけるsmallの開始位置。
+                        for(int k = 0, m = ((i >= j) ? i : j) - ((i >= j) ? j : i); k < small.Count; k++)
+                        {
+                            if(small[k] != null)
+                                list1[k + m] = small[k];
+                        }
+                        return list1;
+                    }
+                }
+            }
+            return new List<AddrPort>();
+        }
     }
 
     public class AddrPort

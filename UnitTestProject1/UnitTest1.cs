@@ -167,5 +167,49 @@ namespace UnitTestProject1
             Console.WriteLine(ret0.ToStr());
             Assert.IsTrue(ProviderAddrPortResolver.IsCompleted(ret0));
         }
+        [TestMethod]
+        public void TestMethod5()
+        {
+            var list1 = new List<AddrPort>();
+            list1.Add(new AddrPort("msg101", 2805));
+            list1.Add(new AddrPort("msg101", 2806));
+            list1.Add(null);
+            list1.Add(new AddrPort("msg101", 2808));
+
+            var list2 = new List<AddrPort>();
+            list2.Add(new AddrPort("msg101", 2807));
+            list2.Add(new AddrPort("msg101", 2808));
+
+            var list = ProviderAddrPortResolver.OuterJoin(list1, list2).ToList();
+            Assert.AreEqual(list[0], new AddrPort("msg101", 2805));
+            Assert.AreEqual(list[1], new AddrPort("msg101", 2806));
+            Assert.AreEqual(list[2], new AddrPort("msg101", 2807));
+            Assert.AreEqual(list[3], new AddrPort("msg101", 2808));
+        }
+        [TestMethod]
+        public void TestMethod6()
+        {
+            var list1 = new List<AddrPort>();
+            list1.Add(new AddrPort("msg101", 2805));
+            list1.Add(new AddrPort("msg101", 2806));
+            list1.Add(new AddrPort("msg101", 2807));
+            list1.Add(new AddrPort("msg101", 2808));
+
+            var list2 = new List<AddrPort>();
+            list2.Add(new AddrPort("msg101", 2808));
+            list2.Add(new AddrPort("msg101", 2809));
+            list2.Add(new AddrPort("msg101", 2810));
+            list2.Add(new AddrPort("msg101", 2811));
+
+
+            var list = ProviderAddrPortResolver.OuterJoin(list1, list2).ToList();
+            Assert.AreEqual(list[0], new AddrPort("msg101", 2805));
+            Assert.AreEqual(list[1], new AddrPort("msg101", 2806));
+            Assert.AreEqual(list[2], new AddrPort("msg101", 2807));
+            Assert.AreEqual(list[3], new AddrPort("msg101", 2808));
+            Assert.AreEqual(list[4], new AddrPort("msg101", 2809));
+            Assert.AreEqual(list[5], new AddrPort("msg101", 2810));
+            Assert.AreEqual(list[6], new AddrPort("msg101", 2811));
+        }
     }
 }
