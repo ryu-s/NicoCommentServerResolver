@@ -5,6 +5,10 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoCommentServerResolver", "NicoCommentServerResolver\NicoCommentServerResolver.csproj", "{688F5D01-880B-47B8-875C-B026CEB9D767}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject1", "UnitTestProject1\UnitTestProject1.csproj", "{79C75CA3-D7C3-4F5E-81B2-FD12AA66177A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{30E4B394-33D4-4CA6-B17B-40D1CF02E22A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{688F5D01-880B-47B8-875C-B026CEB9D767}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{688F5D01-880B-47B8-875C-B026CEB9D767}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{688F5D01-880B-47B8-875C-B026CEB9D767}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79C75CA3-D7C3-4F5E-81B2-FD12AA66177A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79C75CA3-D7C3-4F5E-81B2-FD12AA66177A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79C75CA3-D7C3-4F5E-81B2-FD12AA66177A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79C75CA3-D7C3-4F5E-81B2-FD12AA66177A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30E4B394-33D4-4CA6-B17B-40D1CF02E22A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30E4B394-33D4-4CA6-B17B-40D1CF02E22A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30E4B394-33D4-4CA6-B17B-40D1CF02E22A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30E4B394-33D4-4CA6-B17B-40D1CF02E22A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
