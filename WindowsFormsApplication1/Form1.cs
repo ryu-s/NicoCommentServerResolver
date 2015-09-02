@@ -48,6 +48,7 @@ namespace WindowsFormsApplication1
             var url2 = "http://www.chikuwachan.com/live/";
             var liveIdList = new List<string>();
             var availBrowsers = new[] { ryu_s.MyCommon.Browser.BrowserType.Chrome, ryu_s.MyCommon.Browser.BrowserType.Firefox, ryu_s.MyCommon.Browser.BrowserType.IE };
+            //var availBrowsers = new[] { ryu_s.MyCommon.Browser.BrowserType.IE };
             var circle = ProviderAddrPortResolver.CreateEmptyCircle();
             var liveContextDic = new Dictionary<string, LiveContext>();
             var provider_type = ryu_s.NicoLibrary.Provider_Type.Community;
@@ -109,16 +110,14 @@ namespace WindowsFormsApplication1
                             }
                             catch (AggregateException ex)
                             {
-                                ryu_s.MyCommon.Logging.LogException(ryu_s.MyCommon.LogLevel.error, ex);
                                 context.IsBroadcasting = false;
                             }
                             catch (Exception ex)
                             {
-                                ryu_s.MyCommon.Logging.LogException(ryu_s.MyCommon.LogLevel.error, ex);
                                 context.IsBroadcasting = false;
                             }
                             context.LastAccessDic[browser] = DateTime.Now;
-                            Task.WaitAll(Task.Delay(500));
+                            Task.WaitAll(Task.Delay(100));
                         }                        
                         Task.WaitAll(Task.Delay(1000));
                     }
@@ -144,23 +143,28 @@ namespace WindowsFormsApplication1
                             }
                         }
                     }
-                    ProviderAddrPortResolver.Distinct(Shortage);
-                    ProviderAddrPortResolver.Distinct(Sequentially);
-                    ProviderAddrPortResolver.ComplementShortage(Shortage, Shortage, Sequentially);
-                    ProviderAddrPortResolver.ComplementShortage(Sequentially, Shortage, Sequentially);
-                    Console.WriteLine($"Shortage.Count={One.Count}");
-                    Console.WriteLine($"One.Count={Shortage.Count}");
-                    Console.WriteLine($"Sequentially.Count={Sequentially.Count}");
+                    try {
+                        ProviderAddrPortResolver.Distinct(One);
+                        ProviderAddrPortResolver.Distinct(Shortage);
+                        ProviderAddrPortResolver.Distinct(Sequentially);
+                        ProviderAddrPortResolver.ComplementShortage(Shortage, Shortage, Sequentially);
+                        ProviderAddrPortResolver.ComplementShortage(Sequentially, Shortage, Sequentially);
+                        Console.WriteLine($"Shortage.Count={One.Count}");
+                        Console.WriteLine($"One.Count={Shortage.Count}");
+                        Console.WriteLine($"Sequentially.Count={Sequentially.Count}");
 
 
-                    //ひと通り済んだら
-                    var c = ProviderAddrPortResolver.Concat(circle, Shortage);
-                    var k = ProviderAddrPortResolver.Concat(circle, Sequentially);
-                    //面倒だから全部Shortageに入れちゃう。重複もなんのその。
-                    Shortage.AddRange(c.NotResolved.Select(b => b.ToList()));
-                    Shortage.AddRange(k.NotResolved.Select(b => b.ToList()));
-                    Console.WriteLine($"circle.count={circle.Count}");
-
+                        //ひと通り済んだら
+                        var c = ProviderAddrPortResolver.Concat(circle, Shortage);
+                        var k = ProviderAddrPortResolver.Concat(circle, Sequentially);
+                        //面倒だから全部Shortageに入れちゃう。重複もなんのその。
+                        Shortage.AddRange(c.NotResolved.Select(b => b.ToList()));
+                        Shortage.AddRange(k.NotResolved.Select(b => b.ToList()));
+                        Console.WriteLine($"circle.count={circle.Count}");
+                    }catch(Exception ex)
+                    {
+                        ryu_s.MyCommon.Logging.LogException(ryu_s.MyCommon.LogLevel.error, ex);
+                    }
 
                 } while (!ProviderAddrPortResolver.IsCompleted(circle));
 

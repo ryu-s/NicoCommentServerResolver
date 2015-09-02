@@ -232,5 +232,29 @@ namespace UnitTestProject1
             Assert.AreEqual(list[2], new AddrPort("msg104", 2842));
             Assert.AreEqual(list[3], new AddrPort("msg104", 2843));
         }
+        [TestMethod]
+        public void TestMethod8()
+        {
+            var list1 = new List<AddrPort>();
+            list1.Add(new AddrPort("msg104", 2838));
+            list1.Add(new AddrPort("msg104", 2839));
+            list1.Add(new AddrPort("msg104", 2840));
+            list1.Add(new AddrPort("msg104", 2841));
+            list1.Add(new AddrPort("msg104", 2842));
+            list1.Add(new AddrPort("msg104", 2843));
+
+            var list2 = new List<AddrPort>();
+            list2.Add(new AddrPort("msg104", 2838));
+            list2.Add(new AddrPort("msg104", 2839));
+
+
+            var list = ProviderAddrPortResolver.OuterJoin(list1, list2).ToList();
+            Assert.AreEqual(list[0], new AddrPort("msg104", 2838));
+            Assert.AreEqual(list[1], new AddrPort("msg104", 2839));
+            Assert.AreEqual(list[2], new AddrPort("msg104", 2840));
+            Assert.AreEqual(list[3], new AddrPort("msg104", 2841));
+            Assert.AreEqual(list[4], new AddrPort("msg104", 2842));
+            Assert.AreEqual(list[5], new AddrPort("msg104", 2843));
+        }
     }
 }

@@ -278,14 +278,12 @@ namespace ryu_s
                 {
                     if (left[i] != null && left[i].Equals(right[j]))
                     {
-                        //i, jはそれぞれleft, righの合致した位置
-                        //統合後の要素数
-                        int count;
-                        if (i == j)//同じ場合は、大きい方の要素数
-                            count = (left.Count >= right.Count) ? left.Count : right.Count;
-                        else
-                            count = ((i >= j) ? i : j) + (i >= j ? (right.Count - j) : (left.Count - i));
-                        
+                        //インデックス以降の要素数
+                        var ir = left.Count - i;
+                        var jr = right.Count - j;
+                        //統合後の要素数。インデックスより前の要素数+インデックス以降の要素数
+                        var count = ((i >= j) ? i : j) + ((ir >= jr) ? ir : jr);
+
                         var list1 = Enumerable.Repeat<AddrPort>(null, count).ToList();
                         var large = (i >= j) ? left : right;
                         var small = (i >= j) ? right : left;
@@ -380,7 +378,7 @@ namespace ryu_s
             }
         }
     }
-
+    [Serializable]
     public class AddrPort
     {
         public string Addr { get; private set; }
@@ -405,7 +403,7 @@ namespace ryu_s
         }
         public bool Equals(AddrPort a)
         {
-            return this.Addr == a.Addr && this.Port == a.Port;
+            return a != null && this.Addr == a.Addr && this.Port == a.Port;
         }
         public override int GetHashCode()
         {
