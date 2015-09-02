@@ -22,13 +22,27 @@ namespace WindowsFormsApplication1
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+            Settings.Load();
         }
         protected override void OnClosing(CancelEventArgs e)
         {
             Settings.Save();
             base.OnClosing(e);
         }
-        public async Task Start(CancellationToken ct)
+        public string CreateStatusView(List<List<AddrPort>> shortage, List<List<AddrPort>> ones, List<List<AddrPort>> sequentially, Dictionary<string, LiveContext> liveContextDic, List<string> liveIdList, ryu_s.MyCommon.Browser.BrowserType browser)
+        {
+            var broadcastingCount = liveContextDic.Select(kv => kv.Value).Where(context => context.IsBroadcasting == true).Count();
+            var s = $"";
+            s += $"shortage={shortage.Count}" + Environment.NewLine;
+            s += $"ones={ones.Count}" + Environment.NewLine;
+            s += $"sequentially={sequentially.Count}" + Environment.NewLine;
+            s += $"liveContextDic={liveContextDic.Count}" + Environment.NewLine;
+            s += $"IsBroadcasting={broadcastingCount}" + Environment.NewLine;
+            s += $"liveIdList={liveIdList.Count}" + Environment.NewLine;
+            s += $"currentBrowser={browser}" + Environment.NewLine;
+            return s;
+        }
+        public async Task Start(IProgress<MyProgress> progress, CancellationToken ct)
         {
             var url1 = "http://live.nicovideo.jp/";
             var url2 = "http://www.chikuwachan.com/live/";
@@ -40,15 +54,15 @@ namespace WindowsFormsApplication1
             /// <summary>
             /// 一つしか分かっていない
             /// </summary>
-            var One = new List<List<AddrPort>>();
+            var One = Settings.Instance.One;// new List<List<AddrPort>>();
             /// <summary>
             /// 一部に欠けがある
             /// </summary>
-            var Shortage = new List<List<AddrPort>>();
+            var Shortage = Settings.Instance.Shortage;// new List<List<AddrPort>>();
             /// <summary>
             /// 連続している
             /// </summary>
-            var Sequentially = new List<List<AddrPort>>();
+            var Sequentially = Settings.Instance.Sequentially;// new List<List<AddrPort>>();
             var t = Task.Factory.StartNew(() =>
             {
                 do
@@ -64,6 +78,7 @@ namespace WindowsFormsApplication1
                     //各ブラウザごとにplayerstatusを取得する。
                     foreach (var browser in availBrowsers)
                     {
+                        progress.Report(new MyProgress { Circle = circle.ToStr(), Status = CreateStatusView(Shortage, One, Sequentially, liveContextDic, liveIdList, browser) });
                         foreach (var live_id in liveIdList)
                         {
                             Console.WriteLine(live_id);
@@ -104,7 +119,7 @@ namespace WindowsFormsApplication1
                             }
                             context.LastAccessDic[browser] = DateTime.Now;
                             Task.WaitAll(Task.Delay(500));
-                        }
+                        }                        
                         Task.WaitAll(Task.Delay(1000));
                     }
                     Console.WriteLine("roominfo collection completed");
@@ -198,7 +213,7 @@ namespace WindowsFormsApplication1
             //var s = "";
             //Distinct(Settings.Instance.Shortage);
             cts = new CancellationTokenSource();
-            await Start(cts.Token).ContinueWith(t =>
+            await Start(new Progress<MyProgress>(SetProgress), cts.Token).ContinueWith(t =>
             {
                 cts.Dispose();
                 cts = null;
@@ -207,7 +222,18 @@ namespace WindowsFormsApplication1
             System.Diagnostics.Debug.WriteLine("Completed!");
             return;
         }
-
+        private void SetProgress(MyProgress progress)
+        {
+            Action action = () =>
+            {
+                this.textBox1.Text = progress.Circle;
+                this.textBox2.Text = progress.Status;
+            };
+            if (this.InvokeRequired)
+                this.Invoke(action);
+            else
+                action();
+        }
         private void btnCancel_Click(object sender, EventArgs e)
         {
             if (cts != null)
@@ -298,6 +324,11 @@ namespace WindowsFormsApplication1
         public class StringReport
         {
             public string Message;
+        }
+        public class MyProgress
+        {
+            public string Circle;
+            public string Status;
         }
     }
 }
