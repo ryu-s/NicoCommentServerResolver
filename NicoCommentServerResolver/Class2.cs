@@ -74,133 +74,9 @@ namespace ryu_s
                 return circle;
             }, ct);
         }
-        public Task StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType browser, CancellationToken ct)
-        {
-            return Task.Factory.StartNew(async () =>
-            {
-                while (true)
-                {
-
-                    var liveContextList = new List<LiveContext>();
-
-                    //var dicList = Settings.Instance.LiveInfoDic.ToList();
-                    //for (int i = 0;i< dicList.Count; i++)
-                    //{
-                    //    liveContextList.Add(dicList[i].Value);
-                    //}
-                    foreach(var kv in Settings.Instance.LiveInfoDic)
-                    {
-                        liveContextList.Add(kv.Value);
-                    }
 
 
-                    for (int i = 0;i<liveContextList.Count;i++)
-                    {
-                        var liveContext = liveContextList[i];
-                        getplayerstatus_new playerstatus = null;
-                        try {
-                            if (!liveContext.IsBroadcasting)
-                                continue;
-                            var pair = await GetPlayerStatusTest(liveContext.live_id, new[] { browser }, new Progress<StringReport>());
-                            playerstatus = pair.Key;
-                        }catch(Exception ex)
-                        {
-                            MyCommon.Logging.LogException(MyCommon.LogLevel.error, ex);
-                            liveContext.IsBroadcasting = false;
-                            continue;
-                        }
-                        if (liveContext.RoomList.Where(room => room.room_label == playerstatus.user.room_label).Count() == 0)
-                        {
-                            liveContext.RoomList.Add(new Room4(playerstatus.user.room_label, playerstatus.ms));
-                        }
-                        
-                        await Task.Delay(1000);
-                    }
-                }
-            }, ct);
-        }
-        public class StringReport
-        {
-            public string Message;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="live_id"></param>
-        /// <param name="cc"></param>
-        /// <param name="progress"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        private async Task<Response<getplayerstatus_new>> GetSeatLoopTest(string live_id, System.Net.CookieContainer cc, IProgress<StringReport> progress, System.Threading.CancellationToken token, bool logging)
-        {
-            var report = new StringReport();
-            int loopCounter = 0;
-            Response<getplayerstatus_new> response;
-            do
-            {
-                //座席が取れた場合と座席を取るのが不可能な場合に結果を戻す。それ以外の場合には経過をReportして継続する。
-                token.ThrowIfCancellationRequested();
-                loopCounter++;
-                response = await Api.GetPlayerStatus_new(live_id, cc, logging);
-                if (response.status == status.ok)
-                {
-                    return response.GetResponse();
-                }
-                else
-                {
-                    var code = response.GetError().code;
-                    switch (code)
-                    {
-                        case errorcode.closed:
-                        case errorcode.notfound:
-                        case errorcode.notlogin:
-                        case errorcode.require_community_member:
-                        case errorcode.deletedbyuser:
-                            return response;
-                        default:
-                            break;
-                    }
-                    report.Message = string.Format("{0} {1, 4}回目", code, loopCounter);
-                    progress.Report(report);
-                }
-            } while (true);
-        }
 
-        private async Task<KeyValuePair<getplayerstatus_new, System.Net.CookieContainer>> GetPlayerStatusTest(string live_id, IEnumerable<ryu_s.MyCommon.Browser.BrowserType> browsersAvailable, IProgress<StringReport> progress)
-        {
-            getplayerstatus_new playerStatus = null;
-            string errMessage = "";
-            System.Net.CookieContainer cc = null;
-            foreach (var browser in browsersAvailable)
-            {
-                cc = ryu_s.NicoLibrary.Tool.GetNicoCookieContainer(browser);
-                Response<getplayerstatus_new> response = null;
-                do
-                {
-                    try
-                    {
-                        response = await GetSeatLoopTest(live_id, cc, progress, new System.Threading.CancellationToken(), true).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"playerstatusが取得出来なかった。リダイレクトされたかも。 live_id={live_id}", ex);
-                    }
-                    if (response is error_new<getplayerstatus_new>)
-                    {
-                        errMessage = $"playerstatusが取得出来なかった。code={response.GetError().code}, live_id={live_id}";
-                        break;
-                    }
-                    playerStatus = response.GetResponse();
-                    goto end;
-                } while (true);
-            }
-        end:
-            if (playerStatus == null)
-            {
-                throw new Exception(errMessage);
-            }
-            return new KeyValuePair<getplayerstatus_new, System.Net.CookieContainer>(playerStatus, cc);
-        }
         public void AddLiveIdSource(string url)
         {
             if (Settings.Instance.SourceList.Where(source => source.Url == url).Count() == 0)
@@ -290,27 +166,7 @@ namespace ryu_s
         }
         public static async Task LiveIdSourceTimer_Elapsed(LiveIdSource source)
         {
-            try {
-                var headers = new KeyValuePair<string, string>[]{
-                new KeyValuePair<string,string>("Accept-Language", "ja-JP"),
-            };
-                var html = await ryu_s.Net.Http.GetAsync(source.Url, headers, null, Encoding.UTF8);
-                var pattern = "lv[\\d]+";
-                var matches = Regex.Matches(html, pattern, RegexOptions.Compiled);
-                foreach (Match m in matches)
-                {
-                    if (m.Success)
-                    {
-                        if (!Settings.Instance.LiveInfoDic.ContainsKey(m.Value))
-                        {
-                            Settings.Instance.LiveInfoDic.AddOrUpdate(m.Value, new LiveContext(m.Value, true), (k,oldValue) => new LiveContext(m.Value, true));
-                        }
-                    }
-                }
-            }catch(Exception ex)
-            {
-                ryu_s.MyCommon.Logging.LogException(MyCommon.LogLevel.error, ex);
-            }
+
         }
     }
 }

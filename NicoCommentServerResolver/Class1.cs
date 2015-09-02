@@ -323,6 +323,19 @@ namespace ryu_s
                 }
             }
         }
+        public static bool Equals(List<AddrPort> left, List<AddrPort> right)
+        {
+            if (left.Count != right.Count)
+                return false;
+            for (int i = 0; i < left.Count; i++)
+            {
+                if ((left[i] == null && right[i] != null) || (left[i] != null && right[i] == null))
+                    return false;
+                if (left[i] != right[i])
+                    return false;
+            }
+            return true;
+        }
         /// <summary>
         /// 総当りで外部結合を試みる
         /// </summary>
