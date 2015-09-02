@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -80,6 +81,18 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MyCommon\MyCommon\MyCommon.csproj">
+      <Project>{96e6a872-52b6-4cb7-aa3e-51b1bc21c6ae}</Project>
+      <Name>MyCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MyCommon\SQLiteWrapper\SQLiteWrapper.csproj">
+      <Project>{10b29af1-6b2f-4f32-9a1c-b459c8813051}</Project>
+      <Name>SQLiteWrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\NicoLibrary\NicoLibrary\NicoLibrary.csproj">
+      <Project>{04715dfc-a688-476f-bb08-581f7ef6b342}</Project>
+      <Name>NicoLibrary</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NicoCommentServerResolver\NicoCommentServerResolver.csproj">
       <Project>{688f5d01-880b-47b8-875c-b026ceb9d767}</Project>
       <Name>NicoCommentServerResolver</Name>

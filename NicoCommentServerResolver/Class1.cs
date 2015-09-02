@@ -300,6 +300,66 @@ namespace ryu_s
             }
             return new List<AddrPort>();
         }
+        /// <summary>
+        /// 重複を削除
+        /// </summary>
+        /// <param name="target"></param>
+        public void Distinct(List<List<AddrPort>> target)
+        {
+            if (target.Count <= 1)
+                return;
+            start:
+            for (int i = 0; i < target.Count; i++)
+            {
+                for (int j = i + 1; j < target.Count; j++)
+                {
+                    var a = target[i];
+                    var b = target[j];
+                    if (Equals(a, b))
+                    {
+                        target.Remove(b);
+                        goto start;
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// 総当りで外部結合を試みる
+        /// </summary>
+        /// <param name="target">総当りしてみるリスト。shortageでもsequentiallyでも可</param>
+        /// <param name="shortage">欠けがあるリストを保持するリスト</param>
+        /// <param name="sequentially">欠けがない（以下同文</param>
+        public void ComplementShortage(List<List<AddrPort>> target, List<List<AddrPort>> shortage, List<List<AddrPort>> sequentially)
+        {
+            if (target.Count <= 1)
+                return;
+            start:
+            for (int i = 0; i < target.Count; i++)
+            {
+                for (int j = i + 1; j < target.Count; j++)
+                {
+                    var a = target[i];
+                    var b = target[j];
+                    var ret = ProviderAddrPortResolver.OuterJoin(a, b);
+                    if (ret.Count() > 0)
+                    {
+                        if (ret.Contains(null))
+                        {
+                            shortage.Add(ret.ToList());
+                        }
+                        else
+                        {
+                            sequentially.Add(ret.ToList());
+                        }
+                        target.Remove(a);
+                        target.Remove(b);
+                        //リストに対して追加したり削除したりと荒らすから処理を継続すると問題が起こりかねない。
+                        //ちょっと無駄が多いけどしょうがないから最初からやり直す。
+                        goto start;
+                    }
+                }
+            }
+        }
     }
 
     public class AddrPort

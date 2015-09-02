@@ -6,8 +6,10 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using ryu_s;
+using ryu_s.NicoLibrary;
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
@@ -16,79 +18,71 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
         }
-        /// <summary>
-        /// 一つしか分かっていない
-        /// </summary>
-        List<List<AddrPort>> One = new List<List<AddrPort>>();
-        /// <summary>
-        /// 一部に欠けがある
-        /// </summary>
-        List<List<AddrPort>> Shortage = new List<List<AddrPort>>();
-        /// <summary>
-        /// 連続している
-        /// </summary>
-        List<List<AddrPort>> Sequentially = new List<List<AddrPort>>();
-        /// <summary>
-        /// 欠けを無くそうと努力してみる
-        /// </summary>
-        public void ComplementShortage()
+        protected override void OnLoad(EventArgs e)
         {
-        start:
-            for (int i = 0; i < Shortage.Count; i++)
-            {
-                for (int j = i + 1; j < Shortage.Count; j++)
-                {
-                    var a = Shortage[i];
-                    var b = Shortage[j];
-                    var ret = ProviderAddrPortResolver.OuterJoin(a, b);
-                    if (ret.Count() > 0)
-                    {
-                        if (ret.Contains(null))
-                        {
-                            Shortage.Add(ret.ToList());
-                        }
-                        else
-                        {
-                            Sequentially.Add(ret.ToList());
-                        }
-                        Shortage.Remove(a);
-                        Shortage.Remove(b);
-                        //リストに対して追加したり削除したりと荒らすから処理を継続すると問題が起こりかねない。
-                        //ちょっと無駄が多いけどしょうがないから最初からやり直す。
-                        goto start;
-                    }
-                }
-            }
+            base.OnLoad(e);
         }
-        private void button1_Click(object sender, EventArgs e)
+        protected override void OnClosing(CancelEventArgs e)
         {
-
-
-            var list1 = new List<AddrPort>();
-            list1.Add(new AddrPort("msg101", 2805));
-            list1.Add(new AddrPort("msg101", 2806));
-            list1.Add(new AddrPort("msg101", 2807));
-            list1.Add(new AddrPort("msg101", 2808));
-            Shortage.Add(list1);
-
-            var list2 = new List<AddrPort>();
-            list2.Add(new AddrPort("msg101", 2808));
-            list2.Add(new AddrPort("msg101", 2809));
-            list2.Add(new AddrPort("msg101", 2810));
-            list2.Add(new AddrPort("msg101", 2811));
-            Shortage.Add(list2);
-
-            //            var list = ProviderAddrPortResolver.OuterJoin(list1, list2).ToList();
-            ComplementShortage();
-            foreach (var k in Shortage)
+            Settings.Save();
+            base.OnClosing(e);
+        }
+        public async Task Start(CancellationToken ct)
+        {
+            var collector = new RoomInfoCollector();
+            collector.AddLiveIdSource("http://live.nicovideo.jp/");
+            collector.AddLiveIdSource("http://www.chikuwachan.com/live/");           
+            
+            var liveIdCollectorTask = collector.StartLiveIdCollection(ct);
+            var roomInfoCollectorTask = collector.StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType.Chrome, ct);
+            await roomInfoCollectorTask;
+            await Task.WhenAll(liveIdCollectorTask, roomInfoCollectorTask);
+        }
+        public bool Equals(List<AddrPort> left, List<AddrPort> right)
+        {
+            if (left.Count != right.Count)
+                return false;
+            for(int i = 0;i < left.Count;i++)
             {
-                foreach (var t in k)
-                {
-                    Console.WriteLine(t);
-                }
+                if ((left[i] == null && right[i] != null) || (left[i] != null && right[i] == null))
+                    return false;
+                if (left[i] != right[i])
+                    return false;
             }
+            return true;
+        }
 
+        CancellationTokenSource cts;
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            //var liveContext = new LiveContext("lv9", true);
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2805, 100 + "")));
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2806, 101 + "")));
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2807, 102 + "")));
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2809, 104 + "")));
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2900, 195 + "")));
+            //liveContext.AddRoom(new Room4("アリーナ", new ms("msg101.live.nicovideo.jp", 2901, 196 + "")));
+
+            //var t = liveContext.ToList();
+            //Settings.Instance.Shortage.Add(t[0]);
+            //Settings.Instance.Shortage.Add(t[0]);
+            //var s = "";
+            //Distinct(Settings.Instance.Shortage);
+            cts = new CancellationTokenSource();
+            await Start(cts.Token).ContinueWith(t =>
+            {
+                cts.Dispose();
+                cts = null;
+            });
             return;
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            if(cts != null)
+            {
+                cts.Cancel();
+            }
         }
     }
 }

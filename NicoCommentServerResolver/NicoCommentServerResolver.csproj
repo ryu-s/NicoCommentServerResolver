@@ -41,10 +41,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Class2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="memo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MyCommon\MyCommon\MyCommon.csproj">
+      <Project>{96e6a872-52b6-4cb7-aa3e-51b1bc21c6ae}</Project>
+      <Name>MyCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\NicoLibrary\NicoLibrary\NicoLibrary.csproj">
+      <Project>{04715dfc-a688-476f-bb08-581f7ef6b342}</Project>
+      <Name>NicoLibrary</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
