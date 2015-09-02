@@ -14,41 +14,63 @@ namespace ryu_s
         public RoomInfoCollector()
         {            
         }
-        public Task Start
-        public Task<Elem<AddrPort>> StartLiveIdCollection(CancellationToken ct)
+        public Task StartLiveIdCollection(CancellationToken ct)
+        {
+            return Task.Factory.StartNew(async() =>
+            {
+                foreach(var c in Settings.Instance.SourceList)
+                {
+                    c.Timer.Start();
+                    await LiveIdSource.LiveIdSourceTimer_Elapsed(c);
+                }
+            }, ct);
+        }
+            
+        public Task<Elem<AddrPort>> CreateCircle(CancellationToken ct)
         {
             return Task.Factory.StartNew(() =>
             {
                 var circle = ProviderAddrPortResolver.CreateEmptyCircle();
                 do
                 {
-                    foreach (var source in Settings.Instance.SourceList)
+                    var liveContextList = new List<LiveContext>();
+                    var dicList = Settings.Instance.LiveInfoDic.ToList();
+                    for (int i = 0;i< dicList.Count; i++)
                     {
-                        var list = Settings.Instance.LiveInfoDic.Select(pair => pair.Value);
-                        foreach (var liveContext in list)
+                        liveContextList.Add(dicList[i].Value);
+                    }
+                    foreach (var liveContext in liveContextList)
+                    {
+                        var listlist = liveContext.ToList();
+                        foreach (var m in listlist)
                         {
-                            var listlist = liveContext.ToList();
-                            foreach(var m in listlist)
+                            if (m.Count == 0)
+                                continue;
+                            if (m.Count == 1)
                             {
-                                if (m.Count == 0)
-                                    continue;
-                                if(m.Count == 1)
-                                {
-                                    Settings.Instance.One.Add(m);
-                                }else if(m.Where(s => s == null).Count() > 0)
-                                {
-                                    Settings.Instance.Shortage.Add(m);
-                                }
-                                else
-                                {
-                                    Settings.Instance.Sequentially.Add(m);
-                                }
+                                Settings.Instance.One.Add(m);
+                            }
+                            else if (m.Where(s => s == null).Count() > 0)
+                            {
+                                Settings.Instance.Shortage.Add(m);
+                            }
+                            else
+                            {
+                                Settings.Instance.Sequentially.Add(m);
                             }
                         }
-                        //ProviderAddrPortResolver.
-                        //ひと通り済んだら
                     }
-                } while (ProviderAddrPortResolver.IsCompleted(circle));
+                    ProviderAddrPortResolver.Distinct(Settings.Instance.Shortage);
+                    ProviderAddrPortResolver.ComplementShortage(Settings.Instance.Shortage, Settings.Instance.Shortage, Settings.Instance.Sequentially);
+                    ProviderAddrPortResolver.ComplementShortage(Settings.Instance.Sequentially, Settings.Instance.Shortage, Settings.Instance.Sequentially);
+                    //ひと通り済んだら
+                    var c = ProviderAddrPortResolver.Concat(circle, Settings.Instance.Shortage);
+                    var k = ProviderAddrPortResolver.Concat(circle, Settings.Instance.Sequentially);
+                    //面倒だから全部Shortageに入れちゃう。重複もなんのその。
+                    Settings.Instance.Shortage.AddRange(c.NotResolved.Select(b => b.ToList()));
+                    Settings.Instance.Shortage.AddRange(k.NotResolved.Select(b => b.ToList()));
+                    Console.WriteLine($"circle.count={circle.Count}");
+                } while (!ProviderAddrPortResolver.IsCompleted(circle));
                 return circle;
             }, ct);
         }
@@ -58,15 +80,40 @@ namespace ryu_s
             {
                 while (true)
                 {
-                    var liveContextList = Settings.Instance.LiveInfoDic.Select(pair => pair.Value);
-                    foreach (var liveContext in liveContextList)
+
+                    var liveContextList = new List<LiveContext>();
+
+                    //var dicList = Settings.Instance.LiveInfoDic.ToList();
+                    //for (int i = 0;i< dicList.Count; i++)
+                    //{
+                    //    liveContextList.Add(dicList[i].Value);
+                    //}
+                    foreach(var kv in Settings.Instance.LiveInfoDic)
                     {
-                        var pair = await GetPlayerStatusTest(liveContext.live_id, new[] { browser }, new Progress<StringReport>());
-                        var playerstatus = pair.Key;
+                        liveContextList.Add(kv.Value);
+                    }
+
+
+                    for (int i = 0;i<liveContextList.Count;i++)
+                    {
+                        var liveContext = liveContextList[i];
+                        getplayerstatus_new playerstatus = null;
+                        try {
+                            if (!liveContext.IsBroadcasting)
+                                continue;
+                            var pair = await GetPlayerStatusTest(liveContext.live_id, new[] { browser }, new Progress<StringReport>());
+                            playerstatus = pair.Key;
+                        }catch(Exception ex)
+                        {
+                            MyCommon.Logging.LogException(MyCommon.LogLevel.error, ex);
+                            liveContext.IsBroadcasting = false;
+                            continue;
+                        }
                         if (liveContext.RoomList.Where(room => room.room_label == playerstatus.user.room_label).Count() == 0)
                         {
                             liveContext.RoomList.Add(new Room4(playerstatus.user.room_label, playerstatus.ms));
                         }
+                        
                         await Task.Delay(1000);
                     }
                 }
@@ -177,7 +224,7 @@ namespace ryu_s
         public LiveContext(string live_id,bool isBroadcasting)
         {
             this.live_id = live_id;
-            this.IsBroadcasting = IsBroadcasting;
+            this.IsBroadcasting = isBroadcasting;
         }
         public void AddRoom(Room4 room)
         {
@@ -189,7 +236,9 @@ namespace ryu_s
         public List<List<AddrPort>> ToList()
         {
             var listList = new List<List<AddrPort>>();
-            //デッキ、立ち見席、
+
+            if (RoomList.Count == 0)
+                return listList;
             
             RoomList.Sort((x, y) => x.ms.thread.CompareTo(y.ms.thread));
             var beforeThread = int.Parse(RoomList[0].ms.thread);
@@ -254,7 +303,7 @@ namespace ryu_s
                     {
                         if (!Settings.Instance.LiveInfoDic.ContainsKey(m.Value))
                         {
-                            Settings.Instance.LiveInfoDic.Add(m.Value, new LiveContext(m.Value, true));
+                            Settings.Instance.LiveInfoDic.AddOrUpdate(m.Value, new LiveContext(m.Value, true), (k,oldValue) => new LiveContext(m.Value, true));
                         }
                     }
                 }

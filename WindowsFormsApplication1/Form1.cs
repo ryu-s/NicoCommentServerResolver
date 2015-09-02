@@ -29,14 +29,18 @@ namespace WindowsFormsApplication1
         }
         public async Task Start(CancellationToken ct)
         {
-            var collector = new RoomInfoCollector();
-            collector.AddLiveIdSource("http://live.nicovideo.jp/");
-            collector.AddLiveIdSource("http://www.chikuwachan.com/live/");           
-            
-            var liveIdCollectorTask = collector.StartLiveIdCollection(ct);
-            var roomInfoCollectorTask = collector.StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType.Chrome, ct);
-            await roomInfoCollectorTask;
-            await Task.WhenAll(liveIdCollectorTask, roomInfoCollectorTask);
+            var url1 = "http://live.nicovideo.jp/";
+            var url2 = "http://www.chikuwachan.com/live/";
+
+
+            //var liveIdCollectorTask = collector.StartLiveIdCollection(ct);
+            //var roomInfoCollectorTask1 = collector.StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType.Chrome, ct);
+            //var roomInfoCollectorTask2 = collector.StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType.Firefox, ct);
+            //var roomInfoCollectorTask3 = collector.StartRoomInfoCollection(ryu_s.MyCommon.Browser.BrowserType.IE, ct);
+
+            //var createCircleTask = collector.CreateCircle(ct);
+            //await Task.WhenAll(liveIdCollectorTask, roomInfoCollectorTask1, roomInfoCollectorTask2, roomInfoCollectorTask3, createCircleTask);
+//            Console.WriteLine(createCircleTask.Result);
         }
         public bool Equals(List<AddrPort> left, List<AddrPort> right)
         {

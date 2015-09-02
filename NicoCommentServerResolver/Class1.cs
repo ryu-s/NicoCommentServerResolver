@@ -304,7 +304,7 @@ namespace ryu_s
         /// 重複を削除
         /// </summary>
         /// <param name="target"></param>
-        public void Distinct(List<List<AddrPort>> target)
+        public static void Distinct(List<List<AddrPort>> target)
         {
             if (target.Count <= 1)
                 return;
@@ -329,7 +329,7 @@ namespace ryu_s
         /// <param name="target">総当りしてみるリスト。shortageでもsequentiallyでも可</param>
         /// <param name="shortage">欠けがあるリストを保持するリスト</param>
         /// <param name="sequentially">欠けがない（以下同文</param>
-        public void ComplementShortage(List<List<AddrPort>> target, List<List<AddrPort>> shortage, List<List<AddrPort>> sequentially)
+        public static void ComplementShortage(List<List<AddrPort>> target, List<List<AddrPort>> shortage, List<List<AddrPort>> sequentially)
         {
             if (target.Count <= 1)
                 return;
