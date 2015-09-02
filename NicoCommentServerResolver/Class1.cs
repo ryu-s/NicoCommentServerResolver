@@ -149,16 +149,18 @@ namespace ryu_s
         public static CircleAndNotResolved<IEnumerable<IEnumerable<AddrPort>>> Concat(Elem<AddrPort> circle, IEnumerable<IEnumerable<AddrPort>> parts)
         {
             var ret0 = circle;
-            var list = parts;
+            var list = parts.ToList();
             int before;
             int after;
-            var tmp = new List<IEnumerable<AddrPort>>();
+            
             //listの要素数が変わらなくなるまでひたすら繰り返す。
             do
             {
+                var tmp = new List<IEnumerable<AddrPort>>();
                 before = list.Count();
-                foreach (var arr in list)
+                for(int i = 0;i<list.Count;i++)
                 {
+                    var arr = list[i];
                     var ret = ProviderAddrPortResolver.Concat(ret0, arr);
                     if (ret.NotResolved.Count() != 0)
                         tmp.Add(ret.NotResolved);
@@ -278,7 +280,11 @@ namespace ryu_s
                     {
                         //i, jはそれぞれleft, righの合致した位置
                         //統合後の要素数
-                        var count = ((i >= j) ? i : j) + (i >= j ? (right.Count - j) : (left.Count - i));
+                        int count;
+                        if (i == j)//同じ場合は、大きい方の要素数
+                            count = (left.Count >= right.Count) ? left.Count : right.Count;
+                        else
+                            count = ((i >= j) ? i : j) + (i >= j ? (right.Count - j) : (left.Count - i));
                         
                         var list1 = Enumerable.Repeat<AddrPort>(null, count).ToList();
                         var large = (i >= j) ? left : right;

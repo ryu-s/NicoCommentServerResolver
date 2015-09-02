@@ -60,26 +60,35 @@ namespace WindowsFormsApplication1
                         liveIdList.AddRange(idList);
                     }
                     liveIdList = liveIdList.Select(s => s).Distinct().ToList();
-                    foreach (var live_id in liveIdList)
+
+                    //各ブラウザごとにplayerstatusを取得する。
+                    foreach (var browser in availBrowsers)
                     {
-                        Console.WriteLine(live_id);
-                        if (!liveContextDic.ContainsKey(live_id))
+                        foreach (var live_id in liveIdList)
                         {
-                            liveContextDic.Add(live_id, new LiveContext(live_id, true));
-                        }
-                        var context = liveContextDic[live_id];
-                        //5分以内に同じ放送にアクセスしない。座席が変わることを期待して。
-                        if (context.LastAccess.AddMinutes(5) > DateTime.Now)
-                            continue;
-                        //各ブラウザごとにplayerstatusを取得する。
-                        foreach (var browser in availBrowsers)
-                        {
+                            Console.WriteLine(live_id);
+                            if (!liveContextDic.ContainsKey(live_id))
+                            {
+                                liveContextDic.Add(live_id, new LiveContext(live_id, true));
+                            }
+                            var context = liveContextDic[live_id];
+                            if (!context.IsBroadcasting)
+                                continue;
+                            //5分以内に同じ放送にアクセスしない。座席が変わることを期待して。
+                            if (context.LastAccessDic.ContainsKey(browser) && context.LastAccessDic[browser].AddMinutes(5) > DateTime.Now)
+                            {
+                                continue;
+                            }
+                            if (!context.LastAccessDic.ContainsKey(browser))
+                            {
+                                context.LastAccessDic.Add(browser, new DateTime(0));
+                            }
                             try
                             {
                                 var playerstatus = GetPlayerStatusTest(live_id, browser, null).Result;
                                 System.Diagnostics.Debug.WriteLine($"{playerstatus.user.room_label}, {playerstatus.user.room_seetno}");
                                 if (playerstatus.stream.Provider_Type == provider_type && !context.RoomList.Select(room => room.room_label).Contains(playerstatus.user.room_label))
-                                {                                    
+                                {
                                     context.RoomList.Add(new Room4(playerstatus.user.room_label, playerstatus.ms));
                                 }
                             }
@@ -93,7 +102,8 @@ namespace WindowsFormsApplication1
                                 ryu_s.MyCommon.Logging.LogException(ryu_s.MyCommon.LogLevel.error, ex);
                                 context.IsBroadcasting = false;
                             }
-                            context.LastAccess = DateTime.Now;
+                            context.LastAccessDic[browser] = DateTime.Now;
+                            Task.WaitAll(Task.Delay(500));
                         }
                         Task.WaitAll(Task.Delay(1000));
                     }
@@ -120,6 +130,7 @@ namespace WindowsFormsApplication1
                         }
                     }
                     ProviderAddrPortResolver.Distinct(Shortage);
+                    ProviderAddrPortResolver.Distinct(Sequentially);
                     ProviderAddrPortResolver.ComplementShortage(Shortage, Shortage, Sequentially);
                     ProviderAddrPortResolver.ComplementShortage(Sequentially, Shortage, Sequentially);
                     Console.WriteLine($"Shortage.Count={One.Count}");
@@ -272,8 +283,9 @@ namespace WindowsFormsApplication1
                         case errorcode.notlogin:
                         case errorcode.require_community_member:
                         case errorcode.deletedbyuser:
-                            //注意！！
+                        //注意！！
                         case errorcode.comingsoon:
+                        case errorcode.noauth:
                             return response;
                         default:
                             break;

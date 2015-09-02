@@ -96,6 +96,7 @@ namespace ryu_s
         public bool IsBroadcasting { get; set; }
         public string live_id { get; private set; }
         public DateTime LastAccess { get; set; }
+        public Dictionary<ryu_s.MyCommon.Browser.BrowserType, DateTime> LastAccessDic { get; set; } = new Dictionary<MyCommon.Browser.BrowserType, DateTime>();
         public List<Room4> RoomList { get; private set; } = new List<Room4>();
         public LiveContext(string live_id,bool isBroadcasting)
         {
